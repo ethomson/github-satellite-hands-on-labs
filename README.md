@@ -39,3 +39,14 @@ In this lab you will learn to:
 
 [Go to lab](3-vscode-remote-container/README.md) | Duration: 10 minutes
 
+
+Debug serverless Functions locally with Visual Studio Code, then deploy to Azure
+---
+
+In this lab you will learn to:
+
+1. Creating a JavaScript Azure Functions application using the **Azure Functions** extension.
+2. Debug that application locally with Visual Studio Code.
+3. Deploy your Functions application to Azure.
+
+[Go to lab](4-azure-functions/README.md) | Duration: 10 minutes
