@@ -16,7 +16,7 @@ In this lab you will learn to:
 
 
 Remote Development with Visual Studio Code and WSL
------------------------------------------------------
+--------------------------------------------------
 
 In this lab you will learn to:
 
@@ -28,7 +28,7 @@ In this lab you will learn to:
 
 
 Remote Development with Visual Studio Code and dev containers
------------------------------------------------------
+-------------------------------------------------------------
 
 In this lab you will learn to:
 
@@ -41,7 +41,7 @@ In this lab you will learn to:
 
 
 Debug serverless Functions locally with Visual Studio Code, then deploy to Azure
----
+--------------------------------------------------------------------------------
 
 In this lab you will learn to:
 
