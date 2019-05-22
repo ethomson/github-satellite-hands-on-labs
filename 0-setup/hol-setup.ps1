@@ -48,7 +48,7 @@ code-insiders --install-extension ms-azuretools.vscode-azurefunctions
 Ubuntu1804 run curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - 
 Ubuntu1804 run apt install -y nodejs git
 pushd $env:USERPROFILE
-md code & cd code
+#md code & cd code
 Ubuntu1804 run npx express-generator sample-express-app
 # Do firstrun of `code-insiders` inside wsl to install the server
 Ubuntu1804 run code-insiders sample-express-app
