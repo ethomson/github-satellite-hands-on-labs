@@ -136,7 +136,7 @@ Azure Pipelines can examine your repository so that it can try to determine what
 
   You can scroll through the YAML to see how your project will be built.  First, a trigger is set up so that the build will be automatically executed when there's a new push to the master branch, or a pull request is opened against it.
 
-  Next, the pool is set up.  This build will run on the `ubuntu-latest` pool, which indicates that it will run on Azure Pipelines' cloud-hosted macOS build agents.
+  Next, the pool is set up.  This build will run on the `ubuntu-latest` pool, which indicates that it will run on Azure Pipelines' cloud-hosted Ubuntu build agents.
 
   Then the build steps are defined: the default steps only restore the dependencies with npm and then perform a build.  We want to update these steps to run our unit tests as well, and to publish test results and code coverage to Azure DevOps.
 
