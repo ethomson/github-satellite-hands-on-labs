@@ -1,4 +1,4 @@
-# Configure continuous integration builds for a Python project hosted in GitHub
+# Configure continuous integration builds for a Swift (iOS) project hosted in GitHub
 
 Ensuring that your project can be built at all times, and that all your tests
 pass, is an important part of maintaining project quality, stability and
@@ -13,7 +13,7 @@ projects to build and test their software.
 
 In this lab you will:
 
-- Set up Azure Pipelines to build and test a Python project hosted in GitHub.
+- Set up Azure Pipelines to build and test a Swift project hosted in GitHub.
 - Customize the build by configuring the YAML build definition.
 - Validate pull requests using GitHub Checks and Azure Pipelines
 
@@ -24,18 +24,17 @@ You can [join GitHub](http://github.com/join) to get started.
 
 * If you don't have a Microsoft account, create a free account before you begin.  You can [create a Microsoft account](https://www.microsoft.com/account) to get started.
 
-## 1. Fork the Microsoft cloud scanner project
+## 1. Fork the Swift iOS project
 
-To demonstrate a continous integration build and test setup, we'll use a
-small, modern Python application with unit tests.  We'll make a copy of this project, or a "fork", into our own GitHub repository so that we can work on it freely, without impacting the original open source  project.
+To demonstrate a continous integration build and test setup, we'll use an iOS application written in Swift with xcUnit unit tests.  We'll make a copy of this project, or a "fork", into our own GitHub repository so that we can work on it freely, without impacting the original open source  project.
 
-* Open your browser and navigate to [https://github.com/azure-devops-labs/python](https://github.com/azure-devops-labs/python).
+* Open your browser and navigate to [https://github.com/azure-pipelines-demos/swift-ios](https://github.com/azure-pipelines-demos/swift-ios).
 
 * If you haven't already, sign in to GitHub.
 
   ![sign in](images/1-signin.png)
 
-  When you've signed in, you'll be returned to the Microsoft Cloud Scanner repository.
+  When you've signed in, you'll be returned to the Swift iOS repository.
 
 * Click Fork in the top right corner of the repository page.
 
@@ -87,7 +86,7 @@ Create a new Azure DevOps account so that you can enable Azure Pipelines for you
 
 * On the new account page, you can give your Azure DevOps organization a custom name or choose the default, which is derived from your GitHub username.
 
-* Set your Project name to "python".
+* Set your Project name to "swift-ios".
 
   ![New Account](images/3-newaccount.png)
 
@@ -113,7 +112,7 @@ Since you have already set up Azure Pipelines for an earlier project, you'll nee
 
   ![Create Project](images/4-createproject.png)
 
-* Set the project name to "python".  Set the visibility to "public".  Then click "Create".
+* Set the project name to "swift-ios".  Set the visibility to "public".  Then click "Create".
 
   ![Create Project Details](images/4-createdetails.png)
 
@@ -125,40 +124,47 @@ Since you have already set up Azure Pipelines for an earlier project, you'll nee
 
 Azure Pipelines can examine your repository so that it can try to determine what kind of software project you're building.  It can then suggest a build definition to build and test your software project.  For basic projects, these definitions are often adequate, and for more complex projects, they serve as a good starting point.  You'll need to select the repository that you want to build to get started.
 
-* Select the repository that you want to build.  This will be the `python` repository that you forked in step 1.  (It should be at the top of the repository list.)
+* Select the repository that you want to build.  This will be the `swift-ios` repository that you forked in step 1.  (It should be at the top of the repository list.)
 
   ![Select repository](images/5-selectrepo.png)
 
-* Azure Pipelines will now analyze your repository to determine what language is it, and how it should build it.  Once it's finished with the examination, it will present you with some choices.  Select "Python package" from the options.
+* Azure Pipelines will now analyze your repository to determine what language is it, and how it should build it.  Once it's finished with the examination, it will present you with some choices.  Select "Xcode" from the options.
 
-  ![Python](images/5-python.png)
+  ![TODO](images/5-python.png)
 
 * Now, Azure Pipelines will show you the build definition.  Build definitions are written in the YAML language and checked in to the repository, right next to the code they build.  This is a technique called "configuration as code" and is helpful since it versions the steps to build the code alongside the code itself.
 
   You can scroll through the YAML to see how your project will be built.  First, a trigger is set up so that the build will be automatically executed when there's a new push to the master branch, or a pull request is opened against it.
 
-  Next, the pool is set up.  This build will run on the `Ubuntu-16.04` pool, which indicates that it will run on Azure Pipelines' cloud-hosted Linux build agents.
+  Next, the pool is set up.  This build will run on the `macos-latest` pool, which indicates that it will run on Azure Pipelines' cloud-hosted macOS build agents.
 
-  Then, a matrix is set up.  This allows us to set up multiple builds to run that have minor changes.  In this case, we'll run all the build steps while varying the version of Python being executed.  By default, Azure Pipelines will run your build on Python 2.7, 3.5, 3.6 and 3.7.
+  Then the build steps are defined: the default steps only perform a build.  We want to update these steps to run our unit tests as well.
 
-  Then the build steps are run:  the version of Python is selected (according to the matrix), the dependencies are installed with `pip` and then `pytest` is run.
+  Rewrite the entire YAML file, the complete contents should be:
 
-*  In this case, the project we're building only supports Python 3.6 and newer.  But Azure Pipelines offers to build Python 2.7, and Python 3.5-3.7.  So the suggested pipeline is not suitable for this project.
+  ```
+  trigger:
+  - master
 
-   We want to _remove_ Python 2.7 and Python 3.5 from this build pipeline.  In the build YAML, delete lines 13-16.
-
-   ![edit yaml](images/5-edityaml.png)
-
-   These are the lines that specify the Azure Pipelines.  Your matrix should then look like:
-
-   ```
-   strategy:
-     matrix:
-       Python36:
-         python.version: '3.6'
-       Python37:
-         python.version: '3.7'
-   ```
+  stages:
+  - stage: pr
+    displayName: PR Validation
+    jobs:
+    - job: build_test
+      displayName: 'Build and Test'
+      pool:
+        vmImage: 'macos-latest'
+      steps:
+      - task: Xcode@5
+        displayName: 'Test'
+        inputs:
+          actions: 'test'
+          configuration: '$(TestConfiguration)'
+          sdk: '$(TestSDK)'
+          scheme: 'BeastMatchTests'
+          destinationPlatformOption: 'iOS'
+          publishJUnitResults: true
+  ```
 
 * Once you've updated your build YAML, click "Save and Run".  Then on the pop-up dialog, click "Save and Run" again.  This will finalize the configuration, checking in the YAML into your repository and queue your first build.
 
@@ -168,13 +174,13 @@ Once you've saved your configuration, Azure Pipelines will set up GitHub so that
 
 ## 6. Watch your project build
 
-Now your build will start.  Azure Pipelines will locate two unused Ubuntu 16.04 build agents that are hosted in Azure to perform your build, and start your builds on them.  You're performing two builds in parallel, one for each version of Python that you're building and testing on, as configured by your matrix in step 4.
+Now your build will start.  Azure Pipelines will locate a free macOS build agent that is hosted in Azure to perform your build.
 
-![parallel jobs](images/6-paralleljobs.png)
+![TODO](images/6-paralleljobs.png)
 
 You can watch each step as it's being executed, and you can see the build output from each step.  You can click on any step that's being executed, or has completed, to see the detailed line-by-line output.
 
-After about 45 seconds, both jobs should be complete, and should succeed.  You'll see this indicated by green success check marks next to each job.
+After about 45 seconds, the job should be complete, and should succeed.  You'll see this indicated by green success check marks next to the job.
 
 ![success](images/6-success.png)
 
@@ -186,31 +192,35 @@ You can now review the build output to understand how this project is build, and
 
 ## 7. Create a pull request to your repository
 
-Now that we've set up Azure Pipelines and validated that our builds work correctly and that the tests run, we can see how this is useful for validating pull requests against our project.
+Now that we've set up Azure Pipelines and validated that our builds work correctly and that the tests run, we can see how this is useful for validating pull requests against our project
 
-Let's add a "badge" for PyPI to the project's README, so that users know that this project is on PyPI.
+Let's make a change to the project to see how pull requests are validated.
 
 * Navigate back to your project's repository on GitHub.  You can click on the repository name at the top of the build output page.
 
-  ![go to github](images/7-gotogithub.png)
+  ![TODO](images/7-gotogithub.png)
+
+* In your GitHub repository, click to open the folder named "BeastMatchTests".
+
+  Then click to open the file named "BeastMatchTests.swift".
+
+  Then click the pencil on the right side of the tets file's header.  This will let you start editing the test file.
+
+  ![TODO](images/7-editreadme.png)
+
+* Scroll to line 30.  Comment out the line by prefixing it with `//`.  The line shoud look like:
+
+  ```
+  // viewController.shuffleTiles(tiles: tiles)
+  ```
+
+  This changes the unit test so that it should fail.
 
 * On your GitHub repository, scroll down to the README section (below the files list).  Then click the pencil on the right side of the README's header.  This will let you start editing the README.
 
   ![edit readme](images/7-editreadme.png)
 
-* You'll see the markdown for the README.  On line three, you'll see an existing badge, this is the build badge for the repository, that shows the status of the continuous integration build.
-
-  ![readme](images/7-readme.png)
-
-  (Note that it shows the _original_ project's build status, not your forked repository's build.  This is standard for open source projects.)
-
-  Add a PyPI badge below this, on line 4.  Pasting in the following markdown:
-
-   ```
-   [![PyPI](https://img.shields.io/pypi/v/cloud-scanner.svg)](https://pypi.org/project/cloud-scanner/)
-   ```
-
-* Scroll down to the bottom of the page to commit this change.  In the first text field, the commit title, enter "Add PyPI Badge".
+* Scroll down to the bottom of the page to commit this change.  In the first text field, the commit title, enter "Update unit test".
 
   Select the radio button that says "Create a **new branch** for this commit and start a pull request."
 
@@ -228,11 +238,13 @@ Let's add a "badge" for PyPI to the project's README, so that users know that th
 
   ![build queued](images/7-buildqueued.png)
 
-  Eventually, Azure Pipelines will build the pull request branch, and report the status back, so that you can ensure that you have a successful build and tests on the pull request.
+  Eventually, Azure Pipelines will build the pull request branch, and run the unit tests.  Your change, however, broke the unit test and its assertions will fail.  Therefore, the status check will now turn _red_ indicating that there was a failure.
 
-  ![build complete](images/7-builddone.png)
+  ![TODO](images/7-builddone.png)
 
 Now you've set up a continuous integration build for your Python project on GitHub, and you've seen how to customize the build and how it operates on GitHub Pull Requests.
+
+With this pull request validation build setup, you can see how Azure Pipelines helps protect your master branch to ensure that your code builds and your unit tests pass.  When bad code is submitted as a pull request, it will flag that to help protect you and your contributors.
 
 ## Resources
 
