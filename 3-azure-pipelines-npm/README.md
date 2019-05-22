@@ -1,4 +1,4 @@
-# Configure continuous integration builds for a Swift (iOS) project hosted in GitHub
+# Configure continuous integration builds for a node.js project hosted in GitHub
 
 Ensuring that your project can be built at all times, and that all your tests
 pass, is an important part of maintaining project quality, stability and
@@ -13,7 +13,7 @@ projects to build and test their software.
 
 In this lab you will:
 
-- Set up Azure Pipelines to build and test a Swift project hosted in GitHub.
+- Set up Azure Pipelines to build and test a node.js project hosted in GitHub.
 - Customize the build by configuring the YAML build definition.
 - Validate pull requests using GitHub Checks and Azure Pipelines
 
@@ -24,17 +24,17 @@ You can [join GitHub](http://github.com/join) to get started.
 
 * If you don't have a Microsoft account, create a free account before you begin.  You can [create a Microsoft account](https://www.microsoft.com/account) to get started.
 
-## 1. Fork the Swift iOS project
+## 1. Fork the node.js project
 
-To demonstrate a continous integration build and test setup, we'll use an iOS application written in Swift with xcUnit unit tests.  We'll make a copy of this project, or a "fork", into our own GitHub repository so that we can work on it freely, without impacting the original open source  project.
+To demonstrate a continous integration build and test setup, we'll use a node.js application with mocha unit tests.  We'll make a copy of this project, or a "fork", into our own GitHub repository so that we can work on it freely, without impacting the original open source  project.
 
-* Open your browser and navigate to [https://github.com/azure-pipelines-demos/swift-ios](https://github.com/azure-pipelines-demos/swift-ios).
+* Open your browser and navigate to [https://github.com/azure-pipelines-demos/node](https://github.com/azure-pipelines-demos/node).
 
 * If you haven't already, sign in to GitHub.
 
   ![sign in](images/1-signin.png)
 
-  When you've signed in, you'll be returned to the Swift iOS repository.
+  When you've signed in, you'll be returned to the node repository.
 
 * Click Fork in the top right corner of the repository page.
 
@@ -86,7 +86,7 @@ Create a new Azure DevOps account so that you can enable Azure Pipelines for you
 
 * On the new account page, you can give your Azure DevOps organization a custom name or choose the default, which is derived from your GitHub username.
 
-* Set your Project name to "swift-ios".
+* Set your Project name to "node".
 
   ![New Account](images/3-newaccount.png)
 
@@ -112,7 +112,7 @@ Since you have already set up Azure Pipelines for an earlier project, you'll nee
 
   ![Create Project](images/4-createproject.png)
 
-* Set the project name to "swift-ios".  Set the visibility to "public".  Then click "Create".
+* Set the project name to "node".  Set the visibility to "public".  Then click "Create".
 
   ![Create Project Details](images/4-createdetails.png)
 
@@ -124,11 +124,11 @@ Since you have already set up Azure Pipelines for an earlier project, you'll nee
 
 Azure Pipelines can examine your repository so that it can try to determine what kind of software project you're building.  It can then suggest a build definition to build and test your software project.  For basic projects, these definitions are often adequate, and for more complex projects, they serve as a good starting point.  You'll need to select the repository that you want to build to get started.
 
-* Select the repository that you want to build.  This will be the `swift-ios` repository that you forked in step 1.  (It should be at the top of the repository list.)
+* Select the repository that you want to build.  This will be the `node` repository that you forked in step 1.  (It should be at the top of the repository list.)
 
   ![Select repository](images/5-selectrepo.png)
 
-* Azure Pipelines will now analyze your repository to determine what language is it, and how it should build it.  Once it's finished with the examination, it will present you with some choices.  Select "Xcode" from the options.
+* Azure Pipelines will now analyze your repository to determine what language is it, and how it should build it.  Once it's finished with the examination, it will present you with some choices.  Select "node.js" from the options.
 
   ![TODO](images/5-python.png)
 
@@ -136,9 +136,9 @@ Azure Pipelines can examine your repository so that it can try to determine what
 
   You can scroll through the YAML to see how your project will be built.  First, a trigger is set up so that the build will be automatically executed when there's a new push to the master branch, or a pull request is opened against it.
 
-  Next, the pool is set up.  This build will run on the `macos-latest` pool, which indicates that it will run on Azure Pipelines' cloud-hosted macOS build agents.
+  Next, the pool is set up.  This build will run on the `ubuntu-latest` pool, which indicates that it will run on Azure Pipelines' cloud-hosted macOS build agents.
 
-  Then the build steps are defined: the default steps only perform a build.  We want to update these steps to run our unit tests as well.
+  Then the build steps are defined: the default steps only restore the dependencies with npm and then perform a build.  We want to update these steps to run our unit tests as well, and to publish test results and code coverage to Azure DevOps.
 
   Rewrite the entire YAML file, the complete contents should be:
 
@@ -147,23 +147,36 @@ Azure Pipelines can examine your repository so that it can try to determine what
   - master
 
   stages:
-  - stage: pr
-    displayName: PR Validation
+  - stage: build
+    displayName: 'Build'
     jobs:
-    - job: build_test
-      displayName: 'Build and Test'
+    - job: ci
+      displayName: 'CI'
       pool:
-        vmImage: 'macos-latest'
+        vmImage: 'ubuntu-latest'
       steps:
-      - task: Xcode@5
-        displayName: 'Test'
+      - task: NodeTool@0
         inputs:
-          actions: 'test'
-          configuration: '$(TestConfiguration)'
-          sdk: '$(TestSDK)'
-          scheme: 'BeastMatchTests'
-          destinationPlatformOption: 'iOS'
-          publishJUnitResults: true
+          versionSpec: '10.x'
+        displayName: 'Install Node.js'
+
+      - script: |
+          npm install
+          npm run build
+          npm run test
+        displayName: 'npm install, build and test'
+
+      - task: PublishTestResults@2
+        displayName: 'Publish Test Results'
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFiles: 'out/test-results.xml'
+
+      - task: PublishCodeCoverageResults@1
+        displayName: 'Publish Code Coverage Results'
+        inputs:
+          codeCoverageTool: 'cobertura'
+          summaryFileLocation: 'coverage/cobertura-coverage.xml'
   ```
 
 * Once you've updated your build YAML, click "Save and Run".  Then on the pop-up dialog, click "Save and Run" again.  This will finalize the configuration, checking in the YAML into your repository and queue your first build.
@@ -200,21 +213,21 @@ Let's make a change to the project to see how pull requests are validated.
 
   ![TODO](images/7-gotogithub.png)
 
-* In your GitHub repository, click to open the folder named "BeastMatchTests".
+* In your GitHub repository, click to open the folder named "api".  Then click to open the folder named "controllers".
 
-  Then click to open the file named "BeastMatchTests.swift".
+  Then click to open the file named "arithmeticController.js".
 
-  Then click the pencil on the right side of the test file's header.  This will let you start editing the test file.
+  Then click the pencil on the right side of the controller file's header.  This will let you start editing the controller file.
 
   ![TODO](images/7-editreadme.png)
 
-* Scroll to line 30.  Comment out the line by prefixing it with `//`.  The line shoud look like:
+* Scroll to line 14.  Update the line to remove the `+` before the variables.  The line should look like:
 
   ```
-  // viewController.shuffleTiles(tiles: tiles)
+    'add':      function(a,b) { return a + b },
   ```
 
-  This changes the unit test so that it should fail.
+  This changes the lambda function so that it no longer coerces variables into integers.  (As a result, the unit tests will fail).
 
 * On your GitHub repository, scroll down to the README section (below the files list).  Then click the pencil on the right side of the README's header.  This will let you start editing the README.
 
@@ -242,7 +255,7 @@ Let's make a change to the project to see how pull requests are validated.
 
   ![TODO](images/7-builddone.png)
 
-Now you've set up a continuous integration build for your Swift project on GitHub, and you've seen how to customize the build and how it operates on GitHub Pull Requests.
+Now you've set up a continuous integration build for your node project on GitHub, and you've seen how to customize the build and how it operates on GitHub Pull Requests.
 
 With this pull request validation build setup, you can see how Azure Pipelines helps protect your master branch to ensure that your code builds and your unit tests pass.  When bad code is submitted as a pull request, it will flag that to help protect you and your contributors.
 
