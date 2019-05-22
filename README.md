@@ -26,3 +26,16 @@ In this lab you will learn to:
 
 [Go to lab](2-vscode-remote-wsl/README.md) | Duration: 5 minutes
 
+
+Remote Development with Visual Studio Code and dev containers
+-----------------------------------------------------
+
+In this lab you will learn to:
+
+1. Understand dev containers and `devcontainer.json`.
+2. Clone a repo with a sample project from a language of your choice (Node.js, Python, Go, Java, Rust, PHP, C++), and open that inside a dev container in VS Code.
+3. Move on to another project that doesn't have a `devcontainer.json`, and open that project in a dev container.
+4. Debug your app running inside the dev container.
+
+[Go to lab](3-vscode-remote-container/README.md) | Duration: 10 minutes
+
